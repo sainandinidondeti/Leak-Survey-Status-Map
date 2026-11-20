@@ -1,0 +1,30 @@
+{
+  "amberWarningDays": 60,
+  "rules": {
+    "businessDistrict": {
+      "label": "Business district",
+      "citation": "49 CFR §192.723(b)(1)",
+      "maxIntervalMonths": 15,
+      "calendarYearsAllowed": 1
+    },
+    "outsideBusinessDistrict": {
+      "label": "Outside business district",
+      "citation": "49 CFR §192.723(b)(2)",
+      "maxIntervalMonths": 63,
+      "calendarYearsAllowed": 5
+    }
+  },
+  "businessDistrictZoneValue": "BUSINESS_DISTRICT",
+  "statusColors": {
+    "ok": "#2e9e5b",
+    "due_soon": "#f0a30a",
+    "overdue": "#d93a3a",
+    "unknown": "#7a8594"
+  },
+  "statusLabels": {
+    "ok": "OK",
+    "due_soon": "Due soon",
+    "overdue": "Overdue",
+    "unknown": "Unknown"
+  }
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leak Survey Status Map</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="style.css?v=9">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Leak Survey Status Map</h1>
+    <p>Maple Falls · 49 CFR §192.723(b)(1) and (b)(2) · build 9</p>
+  </header>
+
+  <main class="layout">
+    <div id="error-box" class="error" role="alert" hidden></div>
+
+    <section class="controls" aria-label="Controls">
+      <label>As of date
+        <span class="row"><input type="date" id="asof-date"><button type="button" id="asof-today" class="secondary">Today</button></span>
+      </label>
+      <label>Status filter
+        <select id="status-filter">
+          <option value="all">All statuses</option>
+          <option value="ok">OK</option>
+          <option value="due_soon" id="filter-option-due_soon">Due soon</option>
+          <option value="overdue">Overdue</option>
+          <option value="unknown">Unknown</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="cards" aria-label="Summary">
+      <div class="card"><span class="num" id="count-total">0</span><span class="lbl">Total</span></div>
+      <div class="card ok"><span class="num" id="count-ok">0</span><span class="lbl">OK</span></div>
+      <div class="card due_soon"><span class="num" id="count-due_soon">0</span><span class="lbl">Due soon</span></div>
+      <div class="card overdue"><span class="num" id="count-overdue">0</span><span class="lbl">Overdue</span></div>
+      <div class="card unknown"><span class="num" id="count-unknown">0</span><span class="lbl">Unknown</span></div>
+    </section>
+
+    <section class="map-panel">
+      <div class="map-tools"><button type="button" id="fit-district" class="secondary">Zoom to business district</button><button type="button" id="fit-all" class="secondary">Fit all pipelines</button></div>
+      <div id="map" role="application" aria-label="Pipeline map"></div>
+      <p id="map-summary" class="muted"></p>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Legend</h2>
+        <ul class="legend">
+          <li><i class="swatch ok"></i> OK <b id="legend-count-ok">0</b></li>
+          <li><i class="swatch due_soon"></i> <span id="legend-label-due_soon">Due soon</span> <b id="legend-count-due_soon">0</b></li>
+          <li><i class="swatch overdue"></i> Overdue <b id="legend-count-overdue">0</b></li>
+          <li><i class="swatch unknown"></i> Unknown (missing or insufficient data; pipes with invalid geometry are not drawn) <b id="legend-count-unknown">0</b></li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>Overdue pipelines</h2>
+        <ul id="overdue-list" class="overdue-list"></ul>
+        <button type="button" id="export-csv">Export overdue as CSV</button>
+      </section>
+      <section class="panel">
+        <h2>Data issues &amp; handling</h2>
+        <ul id="issues-list" class="issues"></ul>
+      </section>
+    </aside>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/surveyDates.js?v=9"></script>
+  <script src="js/geometry.js?v=9"></script>
+  <script src="js/status.js?v=9"></script>
+  <script src="js/csv.js?v=9"></script>
+  <script src="js/map.js?v=9"></script>
+  <script src="js/app.js?v=9"></script>
+</body>
+</html>

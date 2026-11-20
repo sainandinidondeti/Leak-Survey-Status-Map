@@ -1,0 +1,250 @@
+{
+ "type": "FeatureCollection",
+ "name": "maple_falls_gas_segments",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "zone": "BUSINESS_DISTRICT",
+    "name": "Maple Falls Downtown"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -83.01,
+       40.0
+      ],
+      [
+       -83.0,
+       40.0
+      ],
+      [
+       -82.998,
+       40.005
+      ],
+      [
+       -83.004,
+       40.01
+      ],
+      [
+       -83.011,
+       40.006
+      ],
+      [
+       -83.01,
+       40.0
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S01",
+    "name": "Main St 4in steel",
+    "last_leak_survey": "2025-01-15"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.006,
+      40.003
+     ],
+     [
+      -83.003,
+      40.003
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S02",
+    "name": "Market St 2in PE",
+    "last_leak_survey": "2025-12-10"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.007,
+      40.005
+     ],
+     [
+      -83.004,
+      40.007
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S03",
+    "name": "Court Sq loop",
+    "last_leak_survey": "2026-06-01"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.008,
+      40.002
+     ],
+     [
+      -83.006,
+      40.004
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S04",
+    "name": "Oak Ridge Rd 2in PE",
+    "last_leak_survey": "2022-03-01"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -82.99,
+      40.015
+     ],
+     [
+      -82.984,
+      40.018
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S05",
+    "name": "Mill Creek Ln 4in steel",
+    "last_leak_survey": "2021-01-20"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.02,
+      39.992
+     ],
+     [
+      -83.016,
+      39.99
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S06",
+    "name": "Hillview Dr 2in PE",
+    "last_leak_survey": "2021-09-10"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -82.992,
+      39.996
+     ],
+     [
+      -82.988,
+      39.993
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S07",
+    "name": "Station Rd 6in steel",
+    "last_leak_survey": "2025-08-20"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.006,
+      40.004
+     ],
+     [
+      -82.99,
+      40.004
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S08",
+    "name": "Pine Hollow Ct 2in PE",
+    "last_leak_survey": null
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.025,
+      40.012
+     ],
+     [
+      -83.022,
+      40.015
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S09",
+    "name": "Depot Spur 2in steel",
+    "last_leak_survey": "2025-05-05"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.002,
+      40.001
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "segment_id": "S10",
+    "name": "Library Ave 2in PE",
+    "last_leak_survey": "2026-01-31"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -83.005,
+      40.006
+     ],
+     [
+      -83.003,
+      40.0075
+     ]
+    ]
+   }
+  }
+ ]
+}

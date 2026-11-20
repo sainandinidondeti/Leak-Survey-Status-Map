@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leak Survey Status Map</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <style>
+:root { --bg:#f3f5f9; --panel:#fff; --text:#1d2433; --muted:#5d6678; --border:#dde2ec; --brand:#1f3b6e;
+  --c-ok:#2e9e5b; --c-due_soon:#f0a30a; --c-overdue:#d93a3a; --c-unknown:#7a8594; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#12161f; --panel:#1b212d; --text:#e8ecf4; --muted:#a2abbd; --border:#2e3646; --brand:#0f1b33; }
+}
+* { box-sizing: border-box; }
+body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }
+.topbar { background:var(--brand); color:#fff; padding:1rem 1.25rem; }
+.topbar h1 { margin:0; font-size:1.4rem; } .topbar p { margin:.15rem 0 0; opacity:.8; font-size:.9rem; }
+.layout { max-width:1280px; margin:0 auto; padding:1rem; display:grid; gap:1rem; grid-template-columns: 1fr; }
+.controls { display:flex; flex-wrap:wrap; gap:1rem; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem; }
+.controls label { display:flex; flex-direction:column; gap:.3rem; font-weight:600; font-size:.85rem; }
+.row { display:flex; gap:.5rem; }
+input, select, button { font:inherit; padding:.5rem .65rem; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); }
+button { cursor:pointer; background:var(--brand); color:#fff; border-color:var(--brand); font-weight:600; }
+button.secondary { background:transparent; color:var(--text); border-color:var(--border); }
+button:disabled { opacity:.45; cursor:not-allowed; }
+.cards { display:grid; grid-template-columns: repeat(5, 1fr); gap:.75rem; }
+.card { background:var(--panel); border:1px solid var(--border); border-top:4px solid var(--brand); border-radius:10px; padding:.7rem; text-align:center; }
+.card.ok { border-top-color:var(--c-ok); } .card.due_soon { border-top-color:var(--c-due_soon); }
+.card.overdue { border-top-color:var(--c-overdue); } .card.unknown { border-top-color:var(--c-unknown); }
+.num { display:block; font-size:1.8rem; font-weight:700; } .lbl { font-size:.8rem; color:var(--muted); }
+#map { height:60vh; min-height:360px; border-radius:10px; border:1px solid var(--border); z-index:0; }
+.muted { color:var(--muted); font-size:.85rem; margin:.4rem 0 0; }
+.side { display:grid; gap:1rem; align-content:start; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem; }
+.panel h2 { margin:0 0 .6rem; font-size:1rem; }
+ul { margin:0; padding:0; list-style:none; }
+.legend li { display:flex; align-items:center; gap:.55rem; padding:.25rem 0; font-size:.88rem; }
+.legend b { margin-left:auto; }
+.swatch { width:28px; height:8px; border-radius:4px; flex:none; }
+.swatch.ok { background:var(--c-ok); } .swatch.due_soon { background:var(--c-due_soon); }
+.swatch.overdue { background:var(--c-overdue); } .swatch.unknown { background:var(--c-unknown); }
+.overdue-list { margin-bottom:.7rem; display:grid; gap:.4rem; }
+.overdue-list button { width:100%; text-align:left; background:transparent; color:var(--text); border:1px solid var(--border); border-left:4px solid var(--c-overdue); font-weight:400; }
+.overdue-list button span { display:block; font-size:.8rem; color:var(--muted); }
+.issues li { font-size:.84rem; padding:.35rem 0; border-top:1px solid var(--border); } .issues li:first-child { border-top:0; }
+.issues ul { list-style:disc; padding-left:1.1rem; color:var(--muted); }
+.empty { color:var(--muted); font-size:.88rem; }
+.error { background:#fde8e8; color:#8a1f1f; border:1px solid #f3b4b4; padding:.7rem 1rem; border-radius:8px; }
+.popup h3 { margin:0 0 .4rem; font-size:.95rem; } .popup dl { margin:0; display:grid; grid-template-columns:auto 1fr; gap:.15rem .7rem; font-size:.85rem; }
+.popup dt { color:#666; } .popup dd { margin:0; } .popup .notes { margin:.5rem 0 0; padding-left:1rem; list-style:disc; font-size:.78rem; color:#555; }
+.badge { padding:.05rem .5rem; border-radius:99px; color:#fff; font-weight:600; font-size:.78rem; }
+.badge.ok { background:var(--c-ok); } .badge.due_soon { background:var(--c-due_soon); color:#1d2433; }
+.badge.overdue { background:var(--c-overdue); } .badge.unknown { background:var(--c-unknown); }
+@media (min-width: 960px) {
+  .layout { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
+  .layout > .error, .controls, .cards { grid-column: 1 / -1; }
+  #map { height: 68vh; }
+}
+@media (max-width: 600px) { .cards { grid-template-columns: repeat(2, 1fr); } .card:first-child { grid-column: 1 / -1; } }
+
+.seg-label { background:#fff; color:#1d2433; border:1px solid #1d2433; border-radius:4px; padding:0 4px; font-weight:700; font-size:.72rem; box-shadow:none; }
+.seg-label::before { display:none; }
+
+.map-tools { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem; }
+.map-tools button { padding:.35rem .7rem; font-size:.85rem; }
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Leak Survey Status Map</h1>
+    <p>Maple Falls · 49 CFR §192.723(b)(1) and (b)(2) · build 9 (standalone)</p>
+  </header>
+
+  <main class="layout">
+    <div id="error-box" class="error" role="alert" hidden></div>
+
+    <section class="controls" aria-label="Controls">
+      <label>As of date
+        <span class="row"><input type="date" id="asof-date"><button type="button" id="asof-today" class="secondary">Today</button></span>
+      </label>
+      <label>Status filter
+        <select id="status-filter">
+          <option value="all">All statuses</option>
+          <option value="ok">OK</option>
+          <option value="due_soon" id="filter-option-due_soon">Due soon</option>
+          <option value="overdue">Overdue</option>
+          <option value="unknown">Unknown</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="cards" aria-label="Summary">
+      <div class="card"><span class="num" id="count-total">0</span><span class="lbl">Total</span></div>
+      <div class="card ok"><span class="num" id="count-ok">0</span><span class="lbl">OK</span></div>
+      <div class="card due_soon"><span class="num" id="count-due_soon">0</span><span class="lbl">Due soon</span></div>
+      <div class="card overdue"><span class="num" id="count-overdue">0</span><span class="lbl">Overdue</span></div>
+      <div class="card unknown"><span class="num" id="count-unknown">0</span><span class="lbl">Unknown</span></div>
+    </section>
+
+    <section class="map-panel">
+      <div class="map-tools"><button type="button" id="fit-district" class="secondary">Zoom to business district</button><button type="button" id="fit-all" class="secondary">Fit all pipelines</button></div>
+      <div id="map" role="application" aria-label="Pipeline map"></div>
+      <p id="map-summary" class="muted"></p>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Legend</h2>
+        <ul class="legend">
+          <li><i class="swatch ok"></i> OK <b id="legend-count-ok">0</b></li>
+          <li><i class="swatch due_soon"></i> <span id="legend-label-due_soon">Due soon</span> <b id="legend-count-due_soon">0</b></li>
+          <li><i class="swatch overdue"></i> Overdue <b id="legend-count-overdue">0</b></li>
+          <li><i class="swatch unknown"></i> Unknown (missing or insufficient data; pipes with invalid geometry are not drawn) <b id="legend-count-unknown">0</b></li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>Overdue pipelines</h2>
+        <ul id="overdue-list" class="overdue-list"></ul>
+        <button type="button" id="export-csv">Export overdue as CSV</button>
+      </section>
+      <section class="panel">
+        <h2>Data issues &amp; handling</h2>
+        <ul id="issues-list" class="issues"></ul>
+      </section>
+    </aside>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>window.EMBEDDED_DATA = {"config": {"amberWarningDays": 60, "rules": {"businessDistrict": {"label": "Business district", "citation": "49 CFR \u00a7192.723(b)(1)", "maxIntervalMonths": 15, "calendarYearsAllowed": 1}, "outsideBusinessDistrict": {"label": "Outside business district", "citation": "49 CFR \u00a7192.723(b)(2)", "maxIntervalMonths": 63, "calendarYearsAllowed": 5}}, "businessDistrictZoneValue": "BUSINESS_DISTRICT", "statusColors": {"ok": "#2e9e5b", "due_soon": "#f0a30a", "overdue": "#d93a3a", "unknown": "#7a8594"}, "statusLabels": {"ok": "OK", "due_soon": "Due soon", "overdue": "Overdue", "unknown": "Unknown"}}, "geojson": {"type": "FeatureCollection", "name": "maple_falls_gas_segments", "features": [{"type": "Feature", "properties": {"zone": "BUSINESS_DISTRICT", "name": "Maple Falls Downtown"}, "geometry": {"type": "Polygon", "coordinates": [[[-83.01, 40.0], [-83.0, 40.0], [-82.998, 40.005], [-83.004, 40.01], [-83.011, 40.006], [-83.01, 40.0]]]}}, {"type": "Feature", "properties": {"segment_id": "S01", "name": "Main St 4in steel", "last_leak_survey": "2025-01-15"}, "geometry": {"type": "LineString", "coordinates": [[-83.006, 40.003], [-83.003, 40.003]]}}, {"type": "Feature", "properties": {"segment_id": "S02", "name": "Market St 2in PE", "last_leak_survey": "2025-12-10"}, "geometry": {"type": "LineString", "coordinates": [[-83.007, 40.005], [-83.004, 40.007]]}}, {"type": "Feature", "properties": {"segment_id": "S03", "name": "Court Sq loop", "last_leak_survey": "2026-06-01"}, "geometry": {"type": "LineString", "coordinates": [[-83.008, 40.002], [-83.006, 40.004]]}}, {"type": "Feature", "properties": {"segment_id": "S04", "name": "Oak Ridge Rd 2in PE", "last_leak_survey": "2022-03-01"}, "geometry": {"type": "LineString", "coordinates": [[-82.99, 40.015], [-82.984, 40.018]]}}, {"type": "Feature", "properties": {"segment_id": "S05", "name": "Mill Creek Ln 4in steel", "last_leak_survey": "2021-01-20"}, "geometry": {"type": "LineString", "coordinates": [[-83.02, 39.992], [-83.016, 39.99]]}}, {"type": "Feature", "properties": {"segment_id": "S06", "name": "Hillview Dr 2in PE", "last_leak_survey": "2021-09-10"}, "geometry": {"type": "LineString", "coordinates": [[-82.992, 39.996], [-82.988, 39.993]]}}, {"type": "Feature", "properties": {"segment_id": "S07", "name": "Station Rd 6in steel", "last_leak_survey": "2025-08-20"}, "geometry": {"type": "LineString", "coordinates": [[-83.006, 40.004], [-82.99, 40.004]]}}, {"type": "Feature", "properties": {"segment_id": "S08", "name": "Pine Hollow Ct 2in PE", "last_leak_survey": null}, "geometry": {"type": "LineString", "coordinates": [[-83.025, 40.012], [-83.022, 40.015]]}}, {"type": "Feature", "properties": {"segment_id": "S09", "name": "Depot Spur 2in steel", "last_leak_survey": "2025-05-05"}, "geometry": {"type": "LineString", "coordinates": [[-83.002, 40.001]]}}, {"type": "Feature", "properties": {"segment_id": "S10", "name": "Library Ave 2in PE", "last_leak_survey": "2026-01-31"}, "geometry": {"type": "LineString", "coordinates": [[-83.005, 40.006], [-83.003, 40.0075]]}}]}};</script>
+<script>
+/* Survey date calculations. Dates are plain "YYYY-MM-DD" strings handled in UTC,
+   so the user's time zone can never shift a date by one day. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.SurveyDates = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+
+  // Strictly parse "YYYY-MM-DD". Returns {y,m,d} or null (rejects 2026-02-30, "abc", null...).
+  function parseISODate(text) {
+    if (typeof text !== 'string') return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text.trim());
+    if (!match) return null;
+    const y = +match[1], m = +match[2], d = +match[3];
+    const check = new Date(Date.UTC(y, m - 1, d));
+    if (check.getUTCFullYear() !== y || check.getUTCMonth() !== m - 1 || check.getUTCDate() !== d) return null;
+    return { y, m, d };
+  }
+
+  function pad(n, width) { return String(n).padStart(width, '0'); }
+  function toISO(date) { return pad(date.y, 4) + '-' + pad(date.m, 2) + '-' + pad(date.d, 2); }
+
+  function daysInMonth(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+
+  // Add whole months. If the target month is shorter, clamp to its last day
+  // (31 Jan 2026 + 15 months -> 30 Apr 2027).
+  function addMonths(date, months) {
+    const zeroBased = date.y * 12 + (date.m - 1) + months;
+    const y = Math.floor(zeroBased / 12);
+    const m = (zeroBased % 12) + 1;
+    return { y, m, d: Math.min(date.d, daysInMonth(y, m)) };
+  }
+
+  function toUTCms(date) { return Date.UTC(date.y, date.m - 1, date.d); }
+
+  // Whole days from a to b (positive if b is later).
+  function daysBetween(a, b) { return Math.round((toUTCms(b) - toUTCms(a)) / 86400000); }
+
+  // Today in the user's local calendar, as YYYY-MM-DD.
+  function todayISO() {
+    const now = new Date();
+    return pad(now.getFullYear(), 4) + '-' + pad(now.getMonth() + 1, 2) + '-' + pad(now.getDate(), 2);
+  }
+
+  /* Next survey due date = the EARLIER of two deadlines:
+       (a) last survey + maxIntervalMonths           ("intervals not exceeding N months")
+       (b) 31 Dec of (last survey year + calendarYearsAllowed)   ("at least once each / every N calendar years")
+     rule = { maxIntervalMonths, calendarYearsAllowed } from config.json */
+  function computeNextDue(lastSurvey, rule) {
+    const byInterval = addMonths(lastSurvey, rule.maxIntervalMonths);
+    const byCalendar = { y: lastSurvey.y + rule.calendarYearsAllowed, m: 12, d: 31 };
+    const intervalIsEarlier = toUTCms(byInterval) <= toUTCms(byCalendar);
+    return {
+      due: intervalIsEarlier ? byInterval : byCalendar,
+      byInterval, byCalendar,
+      bindingConstraint: intervalIsEarlier ? 'interval' : 'calendar-year'
+    };
+  }
+
+  return { parseISODate, toISO, addMonths, daysBetween, todayISO, computeNextDue };
+});
+
+</script>
+  <script>
+/* Geometry validation and business-district classification.
+   Coordinates follow GeoJSON order: [longitude, latitude]. Pure functions, no map code. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.Geometry = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+
+  function isValidCoordinate(c) {
+    return Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]) &&
+      Math.abs(c[0]) <= 180 && Math.abs(c[1]) <= 90;
+  }
+
+  // A usable pipeline must be a LineString with >= 2 valid coordinates.
+  function validateLineString(geometry) {
+    if (!geometry || typeof geometry !== 'object') return { valid: false, reason: 'Geometry is missing.' };
+    if (geometry.type !== 'LineString') return { valid: false, reason: 'Geometry type is "' + geometry.type + '", expected LineString.' };
+    const coords = geometry.coordinates;
+    if (!Array.isArray(coords)) return { valid: false, reason: 'Coordinates are missing.' };
+    if (coords.length < 2) return { valid: false, reason: 'LineString has only ' + coords.length + ' coordinate(s); at least 2 are required.' };
+    if (!coords.every(isValidCoordinate)) return { valid: false, reason: 'LineString contains an invalid coordinate.' };
+    return { valid: true, reason: '' };
+  }
+
+  // Ray-casting point-in-ring test.
+  function pointInRing(pt, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i], [xj, yj] = ring[j];
+      if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  // polygon = array of rings; ring 0 is the outer boundary, later rings are holes.
+  function pointInPolygon(pt, polygon) {
+    if (!pointInRing(pt, polygon[0])) return false;
+    return !polygon.slice(1).some(hole => pointInRing(pt, hole));
+  }
+
+  function cross(o, a, b) { return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); }
+  function withinBox(p, a, b) {
+    return Math.min(a[0], b[0]) <= p[0] && p[0] <= Math.max(a[0], b[0]) &&
+           Math.min(a[1], b[1]) <= p[1] && p[1] <= Math.max(a[1], b[1]);
+  }
+
+  // Do segments p1-p2 and p3-p4 intersect (touching and collinear overlap count)?
+  function segmentsIntersect(p1, p2, p3, p4) {
+    const d1 = cross(p3, p4, p1), d2 = cross(p3, p4, p2), d3 = cross(p1, p2, p3), d4 = cross(p1, p2, p4);
+    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+    if (d1 === 0 && withinBox(p1, p3, p4)) return true;
+    if (d2 === 0 && withinBox(p2, p3, p4)) return true;
+    if (d3 === 0 && withinBox(p3, p1, p2)) return true;
+    if (d4 === 0 && withinBox(p4, p1, p2)) return true;
+    return false;
+  }
+
+  function lineCrossesPolygonEdge(line, polygon) {
+    for (const ring of polygon)
+      for (let i = 0; i < line.length - 1; i++)
+        for (let j = 0; j < ring.length - 1; j++)
+          if (segmentsIntersect(line[i], line[i + 1], ring[j], ring[j + 1])) return true;
+    return false;
+  }
+
+  /* Classify a valid line against the business district polygon(s).
+     CONSERVATIVE RULE: any non-zero intersection (fully inside, crossing, or touching) => business district.
+     relation: 'inside' | 'crossing' (partly inside or touching the boundary) | 'outside' */
+  function classifyLine(line, polygons) {
+    let relation = 'outside';
+    for (const polygon of polygons) {
+      const edgeHit = lineCrossesPolygonEdge(line, polygon);
+      const allInside = line.every(pt => pointInPolygon(pt, polygon));
+      const anyInside = line.some(pt => pointInPolygon(pt, polygon));
+      if (allInside && !edgeHit) return { area: 'business', relation: 'inside' };
+      if (edgeHit || anyInside) relation = 'crossing';
+    }
+    return { area: relation === 'outside' ? 'outside' : 'business', relation };
+  }
+
+  return { isValidCoordinate, validateLineString, pointInPolygon, segmentsIntersect, classifyLine };
+});
+
+</script>
+  <script>
+/* Turns GeoJSON features into pipeline records and works out each record's survey status.
+   No DOM or map code here. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./surveyDates'), require('./geometry'));
+  else root.Status = factory(root.SurveyDates, root.Geometry);
+})(typeof self !== 'undefined' ? self : this, function (SurveyDates, Geometry) {
+
+  const AREA_TO_RULE_KEY = { business: 'businessDistrict', outside: 'outsideBusinessDistrict' };
+
+  /* Read the FeatureCollection. Returns { districtPolygons, records, notes }.
+     Nothing is silently dropped: every unusual feature produces a note or a record with issues. */
+  function buildRecords(geojson, config) {
+    const districtPolygons = [], records = [], notes = [];
+    const features = geojson && Array.isArray(geojson.features) ? geojson.features : [];
+    if (!features.length) notes.push('The GeoJSON contains no features.');
+
+    features.forEach((feature, index) => {
+      const props = (feature && feature.properties) || {};
+      const geom = feature && feature.geometry;
+
+      if (props.zone === config.businessDistrictZoneValue) {
+        if (geom && geom.type === 'Polygon' && Array.isArray(geom.coordinates)) districtPolygons.push(geom.coordinates);
+        else if (geom && geom.type === 'MultiPolygon' && Array.isArray(geom.coordinates)) districtPolygons.push(...geom.coordinates);
+        else notes.push('Feature #' + (index + 1) + ' is marked as business district but has no usable polygon geometry.');
+        return;
+      }
+      if (!props.segment_id) {
+        notes.push('Feature #' + (index + 1) + ' has no segment_id and no business-district zone; it was not treated as a pipeline.');
+        return;
+      }
+      records.push({
+        id: String(props.segment_id),
+        name: props.name || '(no name)',
+        lastSurveyRaw: props.last_leak_survey === undefined ? null : props.last_leak_survey,
+        geometry: geom,
+        coordinates: null,   // filled only when the geometry is valid
+        issues: []
+      });
+    });
+
+    if (!districtPolygons.length) notes.push('No business district polygon found: every valid pipeline will be classified as outside.');
+
+    // Geometry validation and area classification happen once, before any status maths.
+    records.forEach(rec => {
+      const check = Geometry.validateLineString(rec.geometry);
+      rec.geometryValid = check.valid;
+      rec.area = null; rec.relation = null;
+      if (!check.valid) { rec.issues.push('Invalid geometry: ' + check.reason + ' It cannot be drawn or classified.'); return; }
+      rec.coordinates = rec.geometry.coordinates;
+      const cls = Geometry.classifyLine(rec.coordinates, districtPolygons);
+      rec.area = cls.area; rec.relation = cls.relation;
+      if (cls.relation === 'crossing') rec.issues.push('Crosses or touches the business district boundary; classified as business district (conservative rule).');
+    });
+    return { districtPolygons, records, notes };
+  }
+
+  /* Evaluate one record against an "as of" ISO date.
+     Returns { status, nextDue, rule, daysUntilDue, reasons[] } and never throws. */
+  function evaluate(record, asOfISO, config) {
+    const result = { status: 'unknown', nextDue: null, rule: null, lastSurvey: null, daysUntilDue: null, reasons: [] };
+    const asOf = SurveyDates.parseISODate(asOfISO);
+    if (!asOf) { result.reasons.push('The "as of" date is invalid.'); return result; }
+
+    const missing = record.lastSurveyRaw === null || record.lastSurveyRaw === '';
+    const last = missing ? null : SurveyDates.parseISODate(record.lastSurveyRaw);
+    if (missing) result.reasons.push('Last survey date is missing; no date was invented.');
+    else if (!last) result.reasons.push('Last survey date "' + record.lastSurveyRaw + '" is not a valid YYYY-MM-DD date.');
+    else result.lastSurvey = SurveyDates.toISO(last);
+
+    if (!record.geometryValid) result.reasons.push('Geometry is invalid, so business-district status cannot be determined.');
+    if (!last || !record.geometryValid) return result;
+
+    const rule = config.rules[AREA_TO_RULE_KEY[record.area]];
+    result.rule = rule;
+    const calc = SurveyDates.computeNextDue(last, rule);
+    result.nextDue = SurveyDates.toISO(calc.due);
+    result.bindingConstraint = calc.bindingConstraint;
+    result.daysUntilDue = SurveyDates.daysBetween(asOf, calc.due);
+
+    if (SurveyDates.daysBetween(last, asOf) < 0) result.reasons.push('Last survey date is after the "as of" date; status calculated anyway.');
+    if (result.daysUntilDue < 0) result.status = 'overdue';
+    else if (result.daysUntilDue <= config.amberWarningDays) result.status = 'due_soon';
+    else result.status = 'ok';
+    return result;
+  }
+
+  return { buildRecords, evaluate };
+});
+
+</script>
+  <script>
+/* CSV export of overdue pipelines. Cells are quoted, and cells starting with = + - @ get a
+   leading apostrophe so spreadsheet apps cannot run them as formulas. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.Csv = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  function cell(value) {
+    let text = value === null || value === undefined ? '' : String(value);
+    if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+  // rows = [{record, result}] already filtered to overdue
+  function buildOverdueCsv(rows, asOfISO) {
+    const header = ['Pipeline ID', 'Name', 'Last survey date', 'Next survey due date', 'Days overdue', 'Area', 'Applicable regulation', 'As of date'];
+    const lines = rows.map(({ record, result }) => [
+      record.id, record.name, result.lastSurvey, result.nextDue, -result.daysUntilDue,
+      result.rule.label, result.rule.citation, asOfISO].map(cell).join(','));
+    return [header.map(cell).join(',')].concat(lines).join('\r\n') + '\r\n';
+  }
+  return { buildOverdueCsv };
+});
+
+</script>
+  <script>
+/* Map rendering only (Leaflet). Knows how to draw things, not how to calculate them. */
+const MapView = (function () {
+  let map, districtLayer, segmentLayer;
+  const lines = {};   // segment id -> Leaflet polyline
+
+  // OpenStreetMap's tile servers reject requests that carry no Referer. A page opened by double-click
+  // (file://) sends none, so in that case we use CARTO tiles (also built from OpenStreetMap data).
+  function init(elementId, onTileProblem) {
+    map = L.map(elementId).setView([40.005, -83.0], 14);
+    const openedAsFile = location.protocol === 'file:';
+    const tiles = L.tileLayer(
+      openedAsFile ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png' : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        maxZoom: 19, subdomains: 'abcd',
+        attribution: openedAsFile
+          ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+    let warned = false;
+    tiles.on('tileerror', () => { if (!warned) { warned = true; if (onTileProblem) onTileProblem(); } });
+    segmentLayer = L.layerGroup().addTo(map);
+  }
+
+  function drawDistrict(polygons) {
+    if (districtLayer) districtLayer.remove();
+    // GeoJSON is [lon, lat]; Leaflet wants [lat, lon].
+    const latLngPolys = polygons.map(poly => poly.map(ring => ring.map(c => [c[1], c[0]])));
+    districtLayer = L.polygon(latLngPolys, { color: '#3b5b92', weight: 2, dashArray: '6 4', fillColor: '#3b5b92', fillOpacity: 0.08, interactive: false }).addTo(map);
+    districtLayer.bindTooltip('Business district', { sticky: true });
+  }
+
+  // items: [{record, result}] to draw. Records with invalid geometry are never passed a path.
+  function drawSegments(items, colors, onSelect, popupHtml) {
+    segmentLayer.clearLayers();
+    Object.keys(lines).forEach(k => delete lines[k]);
+    const labelSides = ['top', 'bottom', 'left', 'right'];   // spread labels so nearby pipes overlap less
+    let drawnCount = 0;
+    items.forEach(({ record, result }) => {
+      if (!record.geometryValid) return;
+      const line = L.polyline(record.coordinates.map(c => [c[1], c[0]]), { color: colors[result.status], weight: 7, opacity: 0.95 });
+      line.bindPopup(popupHtml(record, result));
+      line.bindTooltip(record.id, { permanent: true, direction: labelSides[drawnCount++ % 4], className: 'seg-label' });
+      line.on('click', () => onSelect(record.id));
+      line.addTo(segmentLayer);
+      lines[record.id] = line;
+    });
+  }
+
+  // Zoom to the district polygon plus every drawn line (built by hand: a LayerGroup has no getBounds()).
+  function fitAll() {
+    map.invalidateSize();   // re-measure the map box before fitting, so the zoom is right
+    const bounds = L.latLngBounds([]);
+    if (districtLayer) bounds.extend(districtLayer.getBounds());
+    Object.keys(lines).forEach(id => bounds.extend(lines[id].getBounds()));
+    if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));
+  }
+
+  function fitDistrict() { map.invalidateSize(); if (districtLayer) map.fitBounds(districtLayer.getBounds().pad(0.1)); }
+
+  function focus(id) {
+    const line = lines[id];
+    if (!line) return false;
+    map.fitBounds(line.getBounds().pad(1.5), { maxZoom: 17 });
+    line.openPopup();
+    return true;
+  }
+
+  return { init, drawDistrict, drawSegments, fitAll, fitDistrict, focus };
+})();
+
+</script>
+  <script>
+/* Dashboard UI: loads data, holds state, updates the page. Calculations live in status.js etc. */
+(function () {
+  const $ = id => document.getElementById(id);
+  const state = { config: null, districtPolygons: [], records: [], notes: [], asOf: SurveyDates.todayISO(), filter: 'all', firstDraw: true };
+
+  function esc(text) {
+    return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+  function showError(message) { const box = $('error-box'); box.textContent = message; box.hidden = false; }
+
+  function evaluateAll() {
+    return state.records.map(record => ({ record, result: Status.evaluate(record, state.asOf, state.config) }));
+  }
+
+  function popupHtml(record, result) {
+    const area = record.area ? (record.area === 'business' ? 'Business district' : 'Outside business district') : 'Unknown (invalid geometry)';
+    const reg = result.rule ? result.rule.citation + ' (' + result.rule.label + ')' : 'Not determined';
+    const extra = record.issues.concat(result.reasons).map(t => '<li>' + esc(t) + '</li>').join('');
+    return '<div class="popup"><h3>' + esc(record.id) + ' – ' + esc(record.name) + '</h3><dl>' +
+      '<dt>Last survey</dt><dd>' + esc(result.lastSurvey || 'Not available') + '</dd>' +
+      '<dt>Next due</dt><dd>' + esc(result.nextDue || 'Cannot be calculated') + '</dd>' +
+      '<dt>Location</dt><dd>' + esc(area) + '</dd>' +
+      '<dt>Regulation</dt><dd>' + esc(reg) + '</dd>' +
+      '<dt>Status</dt><dd><span class="badge ' + result.status + '">' + esc(state.config.statusLabels[result.status]) + '</span></dd></dl>' +
+      (extra ? '<ul class="notes">' + extra + '</ul>' : '') + '</div>';
+  }
+
+  function render() {
+    const all = evaluateAll();
+    const counts = { ok: 0, due_soon: 0, overdue: 0, unknown: 0 };
+    all.forEach(x => counts[x.result.status]++);
+
+    $('count-total').textContent = all.length;
+    Object.keys(counts).forEach(k => { $('count-' + k).textContent = counts[k]; $('legend-count-' + k).textContent = counts[k]; });
+
+    renderOverdue(all.filter(x => x.result.status === 'overdue'));
+    renderIssues(all);
+
+    const visible = all.filter(x => state.filter === 'all' || x.result.status === state.filter);
+    try {
+      MapView.drawSegments(visible, state.config.statusColors, () => {}, popupHtml);
+      if (state.firstDraw) { MapView.fitAll(); state.firstDraw = false; }
+    } catch (err) {   // a map problem must never stop the dashboard from updating
+      console.error('Map drawing failed:', err);
+      showError('The map could not be drawn (' + err.message + '). The cards and lists are still correct.');
+    }
+    $('map-summary').textContent = 'Showing ' + visible.filter(x => x.record.geometryValid).length + ' of ' +
+      all.filter(x => x.record.geometryValid).length + ' drawable pipelines. Zoom in or click a line to see details.';
+  }
+
+  function renderOverdue(overdue) {
+    const list = $('overdue-list');
+    $('export-csv').disabled = overdue.length === 0;
+    if (!overdue.length) { list.innerHTML = '<li class="empty">No overdue pipelines as of ' + esc(state.asOf) + '.</li>'; return; }
+    overdue.sort((a, b) => a.result.daysUntilDue - b.result.daysUntilDue);
+    list.innerHTML = overdue.map(({ record, result }) =>
+      '<li><button type="button" data-id="' + esc(record.id) + '"><strong>' + esc(record.id) + '</strong> ' + esc(record.name) +
+      '<span>Due ' + esc(result.nextDue) + ' · ' + (-result.daysUntilDue) + ' days overdue</span></button></li>').join('');
+  }
+
+  // Every record with a problem is shown here, so nothing is silently hidden.
+  function renderIssues(all) {
+    const items = [];
+    state.notes.forEach(n => items.push('<li>' + esc(n) + '</li>'));
+    all.forEach(({ record, result }) => {
+      const reasons = record.issues.concat(result.reasons);
+      if (reasons.length) items.push('<li><strong>' + esc(record.id) + '</strong> ' + esc(record.name) + '<ul>' +
+        reasons.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul></li>');
+    });
+    $('issues-list').innerHTML = items.length ? items.join('') : '<li class="empty">No data issues found.</li>';
+  }
+
+  function exportCsv() {
+    const overdue = evaluateAll().filter(x => x.result.status === 'overdue');
+    const blob = new Blob([Csv.buildOverdueCsv(overdue, state.asOf)], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'overdue-pipelines-' + state.asOf + '.csv';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  // The standalone HTML embeds config + GeoJSON, so it works by double-click with no server.
+  async function loadJson(url) {
+    const key = url.indexOf('config') === 0 ? 'config' : 'geojson';
+    if (window.EMBEDDED_DATA && window.EMBEDDED_DATA[key]) return JSON.parse(JSON.stringify(window.EMBEDDED_DATA[key]));
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw new Error(url + ' returned HTTP ' + response.status);
+    return response.json();
+  }
+
+  async function start() {
+    try {
+      if (typeof L === 'undefined') throw new Error('The Leaflet library did not load. Check your internet connection (it is loaded from a CDN).');
+      state.config = await loadJson('config.json');
+      // The amber label is built from the config so the 60 days is never hardcoded in the page.
+      const amberLabel = 'Due within ' + state.config.amberWarningDays + ' days';
+      state.config.statusLabels.due_soon = amberLabel;
+      $('legend-label-due_soon').textContent = 'Survey ' + amberLabel.toLowerCase();
+      $('filter-option-due_soon').textContent = amberLabel;
+      const geojson = await loadJson('maple_falls_segments.geojson');
+      const built = Status.buildRecords(geojson, state.config);
+      Object.assign(state, built);
+      MapView.init('map', () => showError('Map background tiles could not be loaded (the tile server may be blocking this page). Pipelines, statuses and lists are still correct. To get the map background, run "python3 serve.py" and open http://localhost:8080.'));
+      MapView.drawDistrict(state.districtPolygons);
+    } catch (err) {
+      showError('Could not start the app: ' + err.message + ' If you opened index.html by double-clicking, run a local server instead (see README).');
+      return;
+    }
+
+    $('asof-date').value = state.asOf;
+    $('asof-date').addEventListener('change', e => {
+      if (!SurveyDates.parseISODate(e.target.value)) { showError('Please choose a valid "as of" date.'); e.target.value = state.asOf; return; }
+      $('error-box').hidden = true; state.asOf = e.target.value; render();
+    });
+    $('asof-today').addEventListener('click', () => { state.asOf = SurveyDates.todayISO(); $('asof-date').value = state.asOf; render(); });
+    $('status-filter').addEventListener('change', e => { state.filter = e.target.value; render(); });
+    $('fit-all').addEventListener('click', () => MapView.fitAll());
+    $('fit-district').addEventListener('click', () => MapView.fitDistrict());
+    $('export-csv').addEventListener('click', exportCsv);
+    $('overdue-list').addEventListener('click', e => {
+      const button = e.target.closest('button[data-id]');
+      if (button) { $('map').scrollIntoView({ behavior: 'smooth', block: 'center' }); MapView.focus(button.dataset.id); }
+    });
+    ['ok', 'due_soon', 'overdue', 'unknown'].forEach(k => document.documentElement.style.setProperty('--c-' + k, state.config.statusColors[k]));
+    render();
+    window.addEventListener('load', () => MapView.fitAll());   // re-fit once fonts/layout have settled
+  }
+  document.addEventListener('DOMContentLoaded', start);
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+:root { --bg:#f3f5f9; --panel:#fff; --text:#1d2433; --muted:#5d6678; --border:#dde2ec; --brand:#1f3b6e;
+  --c-ok:#2e9e5b; --c-due_soon:#f0a30a; --c-overdue:#d93a3a; --c-unknown:#7a8594; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#12161f; --panel:#1b212d; --text:#e8ecf4; --muted:#a2abbd; --border:#2e3646; --brand:#0f1b33; }
+}
+* { box-sizing: border-box; }
+body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }
+.topbar { background:var(--brand); color:#fff; padding:1rem 1.25rem; }
+.topbar h1 { margin:0; font-size:1.4rem; } .topbar p { margin:.15rem 0 0; opacity:.8; font-size:.9rem; }
+.layout { max-width:1280px; margin:0 auto; padding:1rem; display:grid; gap:1rem; grid-template-columns: 1fr; }
+.controls { display:flex; flex-wrap:wrap; gap:1rem; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem; }
+.controls label { display:flex; flex-direction:column; gap:.3rem; font-weight:600; font-size:.85rem; }
+.row { display:flex; gap:.5rem; }
+input, select, button { font:inherit; padding:.5rem .65rem; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); }
+button { cursor:pointer; background:var(--brand); color:#fff; border-color:var(--brand); font-weight:600; }
+button.secondary { background:transparent; color:var(--text); border-color:var(--border); }
+button:disabled { opacity:.45; cursor:not-allowed; }
+.cards { display:grid; grid-template-columns: repeat(5, 1fr); gap:.75rem; }
+.card { background:var(--panel); border:1px solid var(--border); border-top:4px solid var(--brand); border-radius:10px; padding:.7rem; text-align:center; }
+.card.ok { border-top-color:var(--c-ok); } .card.due_soon { border-top-color:var(--c-due_soon); }
+.card.overdue { border-top-color:var(--c-overdue); } .card.unknown { border-top-color:var(--c-unknown); }
+.num { display:block; font-size:1.8rem; font-weight:700; } .lbl { font-size:.8rem; color:var(--muted); }
+#map { height:60vh; min-height:360px; border-radius:10px; border:1px solid var(--border); z-index:0; }
+.muted { color:var(--muted); font-size:.85rem; margin:.4rem 0 0; }
+.side { display:grid; gap:1rem; align-content:start; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem; }
+.panel h2 { margin:0 0 .6rem; font-size:1rem; }
+ul { margin:0; padding:0; list-style:none; }
+.legend li { display:flex; align-items:center; gap:.55rem; padding:.25rem 0; font-size:.88rem; }
+.legend b { margin-left:auto; }
+.swatch { width:28px; height:8px; border-radius:4px; flex:none; }
+.swatch.ok { background:var(--c-ok); } .swatch.due_soon { background:var(--c-due_soon); }
+.swatch.overdue { background:var(--c-overdue); } .swatch.unknown { background:var(--c-unknown); }
+.overdue-list { margin-bottom:.7rem; display:grid; gap:.4rem; }
+.overdue-list button { width:100%; text-align:left; background:transparent; color:var(--text); border:1px solid var(--border); border-left:4px solid var(--c-overdue); font-weight:400; }
+.overdue-list button span { display:block; font-size:.8rem; color:var(--muted); }
+.issues li { font-size:.84rem; padding:.35rem 0; border-top:1px solid var(--border); } .issues li:first-child { border-top:0; }
+.issues ul { list-style:disc; padding-left:1.1rem; color:var(--muted); }
+.empty { color:var(--muted); font-size:.88rem; }
+.error { background:#fde8e8; color:#8a1f1f; border:1px solid #f3b4b4; padding:.7rem 1rem; border-radius:8px; }
+.popup h3 { margin:0 0 .4rem; font-size:.95rem; } .popup dl { margin:0; display:grid; grid-template-columns:auto 1fr; gap:.15rem .7rem; font-size:.85rem; }
+.popup dt { color:#666; } .popup dd { margin:0; } .popup .notes { margin:.5rem 0 0; padding-left:1rem; list-style:disc; font-size:.78rem; color:#555; }
+.badge { padding:.05rem .5rem; border-radius:99px; color:#fff; font-weight:600; font-size:.78rem; }
+.badge.ok { background:var(--c-ok); } .badge.due_soon { background:var(--c-due_soon); color:#1d2433; }
+.badge.overdue { background:var(--c-overdue); } .badge.unknown { background:var(--c-unknown); }
+@media (min-width: 960px) {
+  .layout { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
+  .layout > .error, .controls, .cards { grid-column: 1 / -1; }
+  #map { height: 68vh; }
+}
+@media (max-width: 600px) { .cards { grid-template-columns: repeat(2, 1fr); } .card:first-child { grid-column: 1 / -1; } }
+
+.seg-label { background:#fff; color:#1d2433; border:1px solid #1d2433; border-radius:4px; padding:0 4px; font-weight:700; font-size:.72rem; box-shadow:none; }
+.seg-label::before { display:none; }
+
+.map-tools { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem; }
+.map-tools button { padding:.35rem .7rem; font-size:.85rem; }
